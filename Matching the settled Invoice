@@ -1,45 +1,31 @@
-Sub FXorPL()
-
-Dim FS As Long, FSR As Long
-Dim valuetofind As Currency
-Dim brow As Integer, pamt As Integer
-Dim row2 As Integer, amt2 As Integer
-
-FS = Sheets("Summary").Range("C" & Rows.Count).End(xlUp).row
-'RC = Sheets("Bank details").Range("L" & Rows.Count).End(xlUp).row
-
-FSR = FS
-
-Sheets("SUMMARY").Select
-brow = 6
-pamt = 3
-
-While FSR <> 5
-
-FS = Sheets("Summary").Range("C" & Rows.Count).End(xlUp).row
-
-valuetofind = Sheets("Summary").Cells(brow, pamt)
-
-
-Sheets("Bank details").Select
-row2 = 2
-amt2 = 12
-
-While FS <> 5
-    If Round(Cells(row2, amt2), 0) = Round(valuetofind, 0) Then
-        Sheets("SUMMARY").Cells(brow, pamt).Offset(0, -2).Copy
-        Sheets("BANK details").Cells(row2, amt2).Offset(0, 4).PasteSpecial xlAll
-        Sheets("SUMMARY").Cells(brow, pamt).Offset(0, 1).Value = "MATCHED"
-        Application.CutCopyMode = False
-    GoTo Break
-    End If
+Sub valuefind()
+    Dim valuetofind As Currency
    
-    row2 = row2 + 1
-    FS = FS - 1
-Wend
+    startrow = 6
+    LR = 2
+    SR = Sheets("Bank details").Range("J" & Rows.Count).End(xlUp).Row
+    lastrow = Sheets("Summary").Range("C" & startrow).End(xlDown).Row - 1
+   
+    While startrow <= lastrow
+        'lastrow = Range("C" & startrow).End(xlDown).Row - 1
+        'valuetofind = Sheets("bank details").Range("L" & LR).Value
+       
+        While LR <= SR
+        Sheets("SUMMARY").Select
+        valuetofind = Sheets("bank details").Range("L" & LR).Value
+        If Round(Range("C" & startrow).Value, 0) = Round(valuetofind, 0) Then
+             Sheets("Summary").Range("C" & startrow).Offset(, 1).Value = "MATCHED"
+             Sheets("Summary").Range("C" & startrow).Offset(, -2).Copy
+             Sheets("Bank details").Range("L" & LR).Offset(, 4).PasteSpecial
+        GoTo Break
+        End If
+       
+        LR = LR + 1
+       
+        Wend
 Break:
-FSR = FSR - 1
-brow = brow + 1
-Wend
+        startrow = startrow + 1
+        LR = 2
 
+    Wend
 End Sub
