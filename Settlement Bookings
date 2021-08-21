@@ -1,0 +1,145 @@
+Option Explicit
+
+Sub clearing_data()
+
+Sheet2.Cells.ClearContents
+
+'If Sheet3.Range("C2") <> "" Then
+Sheet3.Cells.ClearContents
+'End If
+
+'Sheets("From BUC").Select
+'If Sheet4.Range("C2") <> "" Then
+Sheet4.Cells.ClearContents
+'End If
+
+Sheet1.Select
+Range("A26:M29").ClearContents
+
+Sheet5.Activate
+
+End Sub
+
+Sub Importing_data()
+
+'Dim Accepted_report_DF As String
+'Dim Accepted_report_DT As String
+
+    'From BUC
+Application.ScreenUpdating = False
+Dim wb_path As Variant
+wb_path = ActiveWorkbook.Path + "\Data\" + "TW8000 DF.xlsx"
+Application.Workbooks.Open (wb_path)
+On Error Resume Next
+Workbooks("TW8000 DF.xlsx").Activate
+ActiveSheet.Name = "Accepted report DF"
+Worksheets("Accepted report DF").Range("E2").CurrentRegion.Copy
+Workbooks("PAY1.xlsm").Sheets("From BUC").Range("A1").PasteSpecial xlAll
+Application.DisplayAlerts = False
+Application.CutCopyMode = False
+ActiveWorkbook.Close
+Application.DisplayAlerts = True
+
+
+    'To BUC
+Dim wb_name As Variant
+wb_name = ActiveWorkbook.Path + "\Data" + "\TW8000 DT.xlsx"
+Application.Workbooks.Open (wb_name)
+Workbooks("TW8000 DT.xlsx").Activate
+ActiveSheet.Name = "Accepted report DT"
+Worksheets("Accepted report DT").Range("E2").CurrentRegion.Copy
+Workbooks("PAY1.xlsm").Sheets("To BUC").Range("A1").PasteSpecial xlAll
+Application.DisplayAlerts = False
+Application.CutCopyMode = False
+ActiveWorkbook.Close
+'Application.DisplayAlerts = True
+
+    'FDL report PAY1 OPS1 JE
+Dim wb_path2 As Variant
+wb_path2 = ActiveWorkbook.Path + "\Data" + "\PAY1 OPS1 JE.xlsx"
+Application.Workbooks.Open (wb_path2)
+Workbooks("PAY1 OPS1 JE.xlsx").Activate
+ActiveSheet.AutoFilterMode = False
+Worksheets("Sheet1").Range("C1").AutoFilter field:=3, Criteria1:="PAY1"
+Range("D4").SpecialCells(xlCellTypeVisible).Copy
+Workbooks("PAY1.xlsm").Worksheets("FDL").Range("A1").PasteSpecial xlAll
+'ActiveSheet.AutoFilterMode = True
+Application.DisplayAlerts = False
+Application.CutCopyMode = False
+ActiveWorkbook.Save
+ActiveWorkbook.Close
+Application.DisplayAlerts = True
+
+    'Final ALS PCA Report
+Dim wb_name2 As Variant
+wb_name2 = ActiveWorkbook.Path + "\Data" + "\Final ALS PCA Report.xlsx"
+Application.Workbooks.Open (wb_name2)
+Workbooks("Final ALS PCA Report.xlsx").Activate
+ActiveCell.Name = "Final ALS-PCA report"
+ActiveSheet.AutoFilterMode = False
+Worksheets("Final ALS-PCA report").Range("G1").AutoFilter field:=7, Criteria1:="PAY1"
+Range("C2").CurrentRegion.SpecialCells(xlCellTypeVisible).Copy
+Workbooks("PAY1.xlsm").Worksheets("PVT").Range("A26").PasteSpecial xlAll
+'ActiveSheet.AutoFilterMode = True
+Application.DisplayAlerts = False
+Application.CutCopyMode = False
+ActiveWorkbook.Save
+ActiveWorkbook.Close
+Application.DisplayAlerts = True
+Application.ScreenUpdating = True
+Sheet5.Activate
+
+End Sub
+
+Sub workings()
+
+    'FROM BUC workings
+'Workbooks("PAY1.xlsm").Activate
+Application.ScreenUpdating = False
+Sheets("From BUC").Select
+If Range("B2") = "TW8000" Then
+Range("A:A").Insert
+Range("A1").Value = "From-TO"
+Range("A2").FormulaR1C1 = "=RC[2]=RC[5]"
+Range("B2").Select
+Selection.End(xlDown).Select
+ActiveCell.Offset(0, -1).Activate
+Range(Selection, Selection.End(xlUp)).Select
+Selection.FillDown
+Selection.End(xlUp).Select
+Application.DisplayAlerts = False
+Sheets("From BUC").Range("A1").AutoFilter field:=1, Criteria1:="TRUE"
+Range("C2").CurrentRegion.Offset(1, 0).SpecialCells(xlCellTypeVisible).Delete
+Application.ScreenUpdating = True
+Application.DisplayAlerts = True
+ActiveSheet.AutoFilterMode = False
+End If
+
+    'TO BUC workings
+Application.ScreenUpdating = False
+Sheet3.Select
+If Range("E2") = "TW8000" Then
+Range("A:A").Insert
+Range("A1").Value = "From-TO"
+Range("A2").FormulaR1C1 = "=RC[2]=RC[5]"
+Range("B2").End(xlDown).Select
+ActiveCell.Offset(0, -1).Activate
+Range(Selection, Selection.End(xlUp)).Select
+Selection.FillDown
+Selection.End(xlUp).Select
+Application.DisplayAlerts = False
+Sheets("To BUC").Range("A1").AutoFilter field:=1, Criteria1:="TRUE"
+Range("C2").CurrentRegion.Offset(1, 0).SpecialCells(xlCellTypeVisible).Delete
+Application.DisplayAlerts = True
+Application.ScreenUpdating = True
+ActiveSheet.AutoFilterMode = False
+End If
+
+    ' PCA Total Amount
+Sheet1.Activate
+Range("M32") = Range("M27") + Range("M28")
+
+Sheet1.Select
+ThisWorkbook.RefreshAll
+
+End Sub
