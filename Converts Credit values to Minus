@@ -1,0 +1,14 @@
+Sub Credit_Negative()
+Dim lastrow As Long, startrow As Long
+   
+   startrow = 2
+   lastrow = Range("A" & startrow).End(xlDown).Row
+   
+   While startrow <= lastrow
+    If Range("K" & startrow) = "C" Then
+        Range("L" & startrow) = Range("L" & startrow).Value * -1
+    End If
+    startrow = startrow + 1
+    Wend
+    
+End Sub
