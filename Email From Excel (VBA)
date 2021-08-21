@@ -1,0 +1,291 @@
+Option Explicit
+    Sub AutoEmail()
+
+Dim Outlook As Object
+Dim mail As Object
+Dim Final As Byte, i As Byte
+Dim Choosefile As Variant, CF As Variant
+Dim Ans As VbMsgBoxResult
+Dim DSP As String
+
+Emails.Unprotect "password"
+
+    'Outlook app
+Set Outlook = CreateObject("outlook.application") 'Late binding
+    'check List of report
+If Emails.Range("B1").Value = "" Then
+    MsgBox "Please choose the List of report and re-run"
+    Emails.Range("B1").Select
+    Exit Sub
+End If
+
+    'Body check
+If Range("F5").Value = "" And Range("A25").Value = "" Then
+    MsgBox "Either Own email body content or Default email body should be filled"
+    Exit Sub
+End If
+    Rem Subject Error Check
+If Range("B2").Value Like "Some error occurred *" Then
+    MsgBox "Please check the subject and re-run"
+    Exit Sub
+End If
+
+
+'Default email body check
+
+    Dim DEB As VbMsgBoxResult
+    
+    If Range("F5").Value Like "Seems there is no email body for this report **" Then
+    
+    DEB = MsgBox("It seems the default email body is not listed for this report." & vbNewLine & "Do you wish to continue with own body content?", vbYesNo, "Information")
+    
+    Select Case DEB
+        Case vbNo
+            Exit Sub
+    End Select
+    If DEB = vbYes And Range("A25").Value <= 3 Then
+        MsgBox ("Own email body is blank")
+        Exit Sub
+    End If
+    End If
+    
+    Dim emailbody As VbMsgBoxResult
+    
+If Len(Range("F5").Value) >= 3 And Len(Range("A25").Value) >= 3 And Not Range("F5").Value Like "Seems there is no email body for this report **" Then
+   emailbody = MsgBox("Do you wish to continue with " & Range("F4").Value & "? ", vbYesNo, "Confirmation")
+End If
+
+    If emailbody = 0 Then emailbody = vbNo
+
+    Rem Validating To emails
+For i = 5 To 23
+    
+    If (Not IsNull(Range("A" & i).Value)) And Range("A" & i).Value <> "" Then
+        If (Not Range("A" & i).Value Like "*@outlook.com") Then
+            MsgBox (Range("A" & i).Value & " seems not an valid email address")
+            Exit Sub
+        End If
+        Else: GoTo proceed
+    End If
+    
+Next i
+
+proceed:
+        'Validating CC email
+        
+For i = 5 To 23
+
+    If (Not IsNull(Range("B" & i).Value)) And Range("B" & i).Value <> "" Then
+        If (Not Range("B" & i).Value Like "*@outlook.com") Then
+            MsgBox (Range("B" & i).Value & " seems not an valid email address")
+            Exit Sub
+        End If
+        Else: Exit For
+    End If
+    
+Next
+
+    Rem BCC check
+For i = 5 To 23
+
+    If (Not IsNull(Range("C" & i).Value)) And Range("C" & i).Value <> "" Then
+        If (Not Range("C" & i).Value Like "*@outlook.com") Then
+            MsgBox (Range("C" & i).Value & " seems not an valid email address")
+            Exit Sub
+        End If
+        Else: Exit For
+    End If
+    
+Next
+
+        'Creates New email
+    Set mail = Outlook.createitem(olMailItem)
+    
+    Dim getaddress As String
+    
+    'Hyperlink
+        If Range("E5").Value <> "" Then 'main if
+        
+    Final = Range("E4").End(xlDown).Row
+        
+    For i = 5 To Final
+    Range("E" & i).Select
+    DSP = ""
+      
+            If Emails.Range("E" & i).Value Like "http*://*" Then
+        DSP = InputBox("Please type the name you want to display for " & Chr(10) & Range("E" & i))
+                 
+                'HTML tag
+            Dim tpr As String, res As String
+            
+            tpr = "<br> <a href=" & Emails.Range("E" & i).Value & ">" & DSP & "</a> </br>"
+     
+                Range("E" & i).Hyperlinks.Add Anchor:=Selection, Address:=Range("E" & i).Value, ScreenTip:="click here to view the file", _
+               TextToDisplay:=DSP
+            
+            Else:
+             If DSP = "" Then DSP = Range("E" & i).Value
+            tpr = "<br> <a href=" & Emails.Range("E" & i).Hyperlinks(1).Address & ">" & DSP & "</a> </br>"
+            getaddress = Emails.Range("E" & i).Hyperlinks(1).Address
+            Range("E" & i).Hyperlinks.Add Anchor:=Selection, Address:=getaddress, ScreenTip:="click here to view the file", _
+            TextToDisplay:=DSP
+            
+            End If 'end mail if
+            
+        res = res & "<br></br>" & tpr
+     Next
+        
+        End If
+        
+ With mail
+        'Choosing file
+    Ans = MsgBox("Would you like to attach any additional files?", vbYesNo, "Pick the file")
+        
+
+      Select Case Ans
+          Case vbYes
+      Choosefile = Application.GetOpenFilename(Title:="Browse for the file you want to Attach", filefilter:="Excel files (*.xls*),*xls*", MultiSelect:=True)
+      If Range("D5").Value = "" Then
+        Final = Range("D5").Row
+      Else: Final = Range("D4").End(xlDown).Row + 1
+      End If
+        On Error GoTo errorhandle
+         If Choosefile <> False Then
+Looping: For i = LBound(Choosefile) To UBound(Choosefile)
+
+        Emails.Range("D" & Final).Value = Choosefile(i)
+        Final = Final + 1
+         Next
+        End If
+      End Select
+errorhandle:
+        If Err.Number = 13 Then
+        Resume Looping
+        End If
+ On Error GoTo 0
+    
+        On Error GoTo errorcheck
+    For i = 5 To 23
+    If Range("D" & i).Value <> "" Then
+        If Range("D" & i).Value Like ("C:\*") Or Range("D" & i).Value Like ("D:\*") Or _
+        Range("D" & i).Value Like ("E:\*") Then 'and  Range("D" & i) <> "" Then
+        CF = Range("D" & i).Value
+            .attachments.Add CF
+        End If
+    End If
+    Next
+errorcheck:
+    If Range("D" & i) <> "" Then
+        MsgBox ("Please check the folder path " & Range("D" & i).Value & vbNewLine & "Hence Please verify and re-run")
+        Exit Sub
+    End If
+ On Error GoTo 0
+ 
+ 'Select any ranges
+        Dim selectrange As Range
+        Dim YN As VbMsgBoxResult
+        Dim wb As Workbook, SR As Byte
+        
+        Set wb = ThisWorkbook
+        
+        YN = MsgBox("Would you like to attach any Range/Table?", vbYesNo, "Confirmation")
+        
+        Select Case YN
+            Case vbYes
+            On Error Resume Next
+            'On Error GoTo trap
+       Set selectrange = Application.InputBox("Please select the range you want to attach", "Select the range", , , , , , 8)
+        wb.Select
+        Emails.Select
+        End Select
+
+        Dim sign As String, body As String
+        
+    If Len(Range("A25").Value) >= 3 And Len(Range("F5").Value) >= 3 Then
+        If emailbody = vbNo Then
+            If YN = 6 Then
+                body = Range("A25").Value & Chr(10) & Chr(10)
+                Else: body = Range("A25").Value
+            End If
+        End If
+        
+        If emailbody = vbYes Then
+            If YN = vbYes Then
+                body = Range("F5").Value & Chr(10) & Chr(10)
+                Else: body = Range("F5").Value
+            End If
+        End If
+        
+        Else:
+        If Len(Range("F5").Value) >= 3 Then
+            If YN = 6 Then
+                body = Range("F5").Value & Chr(10) & Chr(10)
+                Else: body = Range("F5").Value
+            End If
+        End If
+        
+        If Len(Range("A25").Value) >= 3 Then
+            If YN = 6 Then
+            body = Range("A25").Value & Chr(10) & Chr(10)
+            Else: body = Range("A25").Value
+            End If
+        End If
+    End If
+'exitrange:
+           'Display email
+        mail.display
+        sign = .HTMLBody
+        
+        'Dim FCOE
+        Dim oAccount As Outlook.account
+        
+        If Range("B3").Value <> "" Then
+        
+        On Error Resume Next
+        'Set oAccount = Outlook.Session.Accounts.Item(2)
+        Set oAccount = Outlook.Session.Accounts.Item(Range("B3").Value)
+        
+        Set .SendUsingAccount = oAccount
+        End If
+        
+        On Error GoTo 0
+        .To = Join(Application.Transpose(Emails.Range("A5:A23").Value), ";")
+        .CC = Join(Application.Transpose(Emails.Range("B5:B23").Value), ";")
+        .BCC = Join(Application.Transpose(Emails.Range("C5:C23").Value), ";")
+        .Subject = Emails.Range("B2").Value
+        .HTMLBody = res & sign
+        
+  End With
+            'Snapshot
+        Dim enspect As Object
+        Dim pageedit As Object
+        
+        Set enspect = mail.getinspector
+        Set pageedit = enspect.wordeditor
+        
+    pageedit.Range.Characters(1).Select
+    With pageedit.Application.Selection
+        .Collapse wdCollapseStart                 ' 1 = wdCollapseStart
+            .InsertAfter body
+            
+        .Collapse wdCollapseEnd                    ' 0 = wdCollapseEnd
+              
+            If YN = vbYes Then
+            On Error Resume Next
+            selectrange.Copy
+                .PasteSpecial DataType:=wdPasteBitmap       ' 4 = wdPasteBitmap
+                .InsertParagraphAfter
+                .Collapse 0
+            End If
+    End With
+
+    MsgBox "Hi " & Application.UserName & "," & Chr(10) & "Mail has been drafted, Please open and send it"
+Application.CutCopyMode = False
+Set mail = Nothing
+Set Outlook = Nothing
+Set pageedit = Nothing
+Set enspect = Nothing
+Set oAccount = Nothing
+Emails.Protect "password"
+
+    End Sub
