@@ -1,0 +1,217 @@
+Dim step1, step2, step3, step4, step5 As Boolean
+
+Sub initialiser()
+
+step1 = False
+step2 = False
+step3 = False
+step4 = False
+step5 = False
+
+End Sub
+
+Sub clearing_content()
+
+Call initialiser
+Sheet2.Cells.ClearContents
+Sheet3.Cells.ClearContents
+Sheet5.Cells.ClearContents
+Sheet7.Range("B10:B11").Select
+step1 = True
+
+End Sub
+
+Sub importing_files()
+    If Not IsNull(step1) Then
+If step1 Then
+    'Declaring SSO ID
+Application.ScreenUpdating = False
+Dim SSO_ID As Variant
+SSO_ID = Application.InputBox("please input your SSO ID", "SSO ID of " & Excel.Application.UserName)
+Sheet1.Select
+Range("C1").Value = SSO_ID
+
+    'Importing ICNADA
+Dim wb_path As Variant
+wb_path = ActiveWorkbook.Path + "\data" + "\ICNADA.xlsx"
+On Error Resume Next
+Application.Workbooks.Open (wb_path)
+Workbooks("ICNADA.xlsx").Activate
+Range("D1").CurrentRegion.Copy
+Workbooks("Accruals.xlsm").Sheets("ICNADA").Range("A1").PasteSpecial xlAll
+Application.CutCopyMode = False
+Application.DisplayAlerts = False
+ActiveWorkbook.Close
+Application.DisplayAlerts = True
+
+    'Importing ICNAD2
+Dim wb_path2 As Variant
+wb_path2 = ActiveWorkbook.Path + "\data\" + "ICNAD2.xlsx"
+On Error Resume Next
+Application.Workbooks.Open (wb_path2)
+Workbooks("ICNAD2.xlsx").Activate
+Range("D1").CurrentRegion.Copy
+Workbooks("Accruals.xlsm").Sheets("ICNAD2").Range("A1").PasteSpecial xlAll
+Application.CutCopyMode = False
+Application.DisplayAlerts = False
+ActiveWorkbook.Close
+Application.DisplayAlerts = True
+Sheet7.Select
+Range("B14:B15").Select
+step2 = True
+
+Else: MsgBox ("Complete Step1")
+End If
+End If
+Application.ScreenUpdating = True
+End Sub
+
+Sub removing_incoming_and_EMIS()
+
+Dim LR As Long
+Dim ER As Long
+   
+    If Not IsNull(step2) Then
+    If step1 And step2 Then
+Application.ScreenUpdating = False
+    'ICNADA
+Worksheets("ICNADA").Select
+ActiveSheet.AutoFilterMode = False
+Worksheets("ICNADA").Range("G1").AutoFilter Field:=7, Criteria1:="INCOMING"
+Application.DisplayAlerts = False
+Range("A2:BM100000").Offset(0, 1).SpecialCells(xlCellTypeVisible).Delete
+Application.DisplayAlerts = True
+ActiveSheet.ShowAllData
+
+    'ICNAD2
+Sheets("ICNAD2").Activate
+ActiveSheet.AutoFilterMode = False
+Worksheets("ICNAD2").Range("G1").AutoFilter Field:=7, Criteria1:="INCOMING"
+Application.DisplayAlerts = False
+Range("A2:BM100000").Offset(0, 1).SpecialCells(xlCellTypeVisible).Delete
+Application.DisplayAlerts = True
+ActiveSheet.ShowAllData
+
+    'EMIS
+Worksheets("ICNADA").Activate
+ActiveSheet.AutoFilterMode = False
+Worksheets("ICNADA").Range("E1").AutoFilter Field:=5, Criteria1:="FSWCCA"
+Range("D1").CurrentRegion.Copy
+Sheets("EMIS").Range("A1").PasteSpecial xlAll
+Sheets("ICNADA").Select
+Worksheets("ICNADA").ShowAllData
+
+    'creating columns
+Sheets("EMIS").Select
+Range("Q:R").Insert
+Range("Q1").Value = "Invoice number(Filtered)"
+Range("R1").Value = "LEN"
+
+
+    'Left function ICNADA & ICNAD2
+    'ICNADA
+Sheets("ICNADA").Select
+Range("BN1").Value = "LEFT"
+LR = Range("A" & Rows.Count).End(xlUp).Row
+Range("BN2", "BN" & LR).Value = "=left(RC[-50],3)"
+
+    'ICNAD2
+Sheets("ICNAD2").Select
+Range("BN1").Value = "Left"
+ER = Range("A" & Rows.Count).End(xlUp).Row
+Range("BN2", "BN" & LR).Value = "=left(RC[-50],3)"
+
+    'CA0 as biller (ICNADA & ICNAD2)
+    'ICNADA
+Sheets("ICNADA").Select
+Range("BO1").Value = "Source"
+Range("BO2", "BO" & LR).Value = "=If(RC[-1]=""CA0"",""Biller"","""")"
+ActiveSheet.Range("BN2:BO" & LR).Copy
+Range("BN2").PasteSpecial xlValues
+Application.CutCopyMode = False
+Columns("BN").Delete
+
+    'ICNAD2
+Sheets("ICNAD2").Select
+Range("BO1").Value = "source"
+Range("BO2", "BO" & ER).Value = "=If(RC[-1]=""CA0"",""Biller"","""")"
+ActiveSheet.Range("BN2:BO" & ER).Copy
+Range("BN2").PasteSpecial xlValues
+Application.CutCopyMode = False
+Columns("BN").Delete
+
+Sheet7.Select
+Range("B18:B19").Select
+
+    'current month
+Sheet1.Select
+Range("D1").Value = MonthName(Month(Date) - 1, True)
+'Range("E1").Value = Year(Date)
+
+Sheet7.Select
+
+step3 = True
+
+Else: MsgBox ("complete step2")
+    End If
+End If
+Application.ScreenUpdating = True
+End Sub
+
+Sub EMIS_working()
+   
+    If Not IsNull(step3) Then
+
+    If step1 And step2 And step3 Then
+   
+Sheets("EMIS").Select
+Dim x As Long
+x = Range("P2000").End(xlUp).Row
+Dim Y As Long
+For Y = 2 To x
+Range("Q" & Y).Value = Replace(Range("P" & Y), "OFST", "")
+Next Y
+    'LEN
+Range("R2").FormulaR1C1 = "=LEN(RC[-1])"
+Range("P2").End(xlDown).Select
+ActiveCell.Offset(0, 2).Activate
+Range(Selection, Selection.End(xlUp)).Select
+Selection.FillDown
+Selection.End(xlUp).Select
+Sheet7.Select
+Range("B22:B23").Select
+
+step3 = True
+
+Else: MsgBox ("complete  step3")
+    End If
+End If
+
+End Sub
+
+Sub refresh_pivot()
+    If Not IsNull(step3) Then
+    If step1 And step2 And step3 And step4 Then
+Sheet1.Activate
+ThisWorkbook.RefreshAll
+
+Sheet7.Select
+Range("A1").Select
+MsgBox Excel.Application.UserName & " Please change the pivot data source"
+End If
+End If
+Sheets("Pivot icnada").Range("E1").Value = Sheets("ICNADA").Range("A2").Value
+End Sub
+
+Sub single_click_run()
+
+Application.ScreenUpdating = False
+Call initialiser
+clearing_content
+importing_files
+removing_incoming_and_EMIS
+EMIS_working
+refresh_pivot
+Application.ScreenUpdating = True
+
+End Sub
