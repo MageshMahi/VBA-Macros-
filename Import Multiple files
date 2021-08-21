@@ -1,0 +1,15 @@
+Sub MultiimportingFile()
+
+Dim filetoopen As Variant 'to select the files
+Dim filecurr As Byte 'current file
+Dim selectedbook As Workbook
+
+
+    'selecting multiple files
+filetoopen = Application.GetOpenFilename("Excel files(*.xlsx),*.xlsx", , "Select", , True)
+ If IsArray(filetoopen) Then
+    For filecurr = 1 To UBound(filetoopen)
+        Set selectedbook = Application.Workbooks.Open(filename:=filetoopen(filecurr))
+    Next 
+
+End If
