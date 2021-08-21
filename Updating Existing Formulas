@@ -1,0 +1,10 @@
+Sub updatingExistingFormulas()
+Dim Formularange As Range
+Dim cell As Range
+ 
+Set Formularange = Cells.SpecialCells(xlCellTypeFormulas)
+    For Each cell In Formularange
+        cell = "=iferror(" & Mid(ActiveCell.Formula, 2) & ",0)"
+    Next cell
+ 
+End Sub
