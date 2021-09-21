@@ -1,3 +1,5 @@
+
+'gssmathi
 Sub Excel2Powerpoint()
 
 Dim MyPPT As Object
@@ -6,34 +8,50 @@ Dim PPTslide As PowerPoint.slide
 Dim wb As Workbook
 Dim i As Integer, S As Integer, sh, C As Integer, CW As Integer, R As Integer, lastshape As Integer, rangecount As Integer, XY As Integer
 Dim LR As Long, x As Byte, y As Byte
-Dim SLD As String
+Dim SLD As String, PPT_path As String
 Dim temp As Range
 Dim L, T, W, H, L1, T1, W1, H1 As Single
 Dim tbl As String, Cname As String, elapse As String
-Dim CHRT As chart
+Dim CHRT As Chart
 Dim CHRT1 As Boolean, trap As Boolean
 Dim VTF As String, MTCH As Integer
 Dim RedTbl As Table
 Dim CNT As Byte
 Dim starttime As Double
-        
+Dim rangeaddress As String
+Dim catog As Variant
+Dim shp As Shape
+
+If Sheets("Buttons").Range("T6").Value = "" Then
+    With Application.FileDialog(msoFileDialogFilePicker)
+        If .Show <> 0 Then PPT_path = .SelectedItems(1)
+        Sheets("buttons").Range("t6").Value = PPT_path
+    End With
+End If
+
+'unHide sheets
+Worksheets("Table").Visible = True
+Worksheets("chart").Visible = True
+
+
 Application.ScreenUpdating = False
 Set wb = ActiveWorkbook
 wb.Save
     'Time setup
 starttime = Timer
+Sheets("Buttons").Select
 
 Set MyPPT = CreateObject("PowerPoint.Application")
 MyPPT.Visible = True
 
-If Range("C2").Value <> "" Then
-    Set PPTPrez = MyPPT.Presentations.Open(Sheets("Buttons").Range("C2").Value)
+If Range("T6").Value <> "" Then
+    Set PPTPrez = MyPPT.Presentations.Open(wb.Sheets("Buttons").Range("T6").Value)
     Else: MsgBox ("Please insert the path of the Powerpoint file and re-run")
 End If
 
-i = 4
-LR = Sheets("buttons").Range("Q3").End(xlDown).Row
-If LR > 200 Then GoTo leavetable
+i = 14
+LR = Sheets("buttons").Range("Q13").End(xlDown).Row
+If LR > 200 Or IsEmpty(Sheets("buttons").Range("P14").Value) Then GoTo leavetable
 
     'Table changer
 'GoTo chartjump
@@ -52,13 +70,12 @@ rangecount = 1
 
 'For rangecount = 1 To 3
 For C = 1 To sh
-                    If rangecount = 1 Then SLD = Sheets("buttons").Range("V" & i).Value
-                    If rangecount = 2 Then SLD = Sheets("buttons").Range("W" & i).Value
-                    If rangecount = 3 Then SLD = Sheets("buttons").Range("X" & i).Value
+                    If rangecount = 1 Then SLD = Sheets("buttons").Range("R" & i).Value
+                    If rangecount = 2 Then SLD = Sheets("buttons").Range("S" & i).Value
+                    If rangecount = 3 Then SLD = Sheets("buttons").Range("T" & i).Value
             
             On Error Resume Next
         If Not SLD = "" Then
-'            For C = 1 To sh
                  If PPTslide.Shapes(C).HasTable Then
                  PPTslide.Shapes(C).Select
                  
@@ -72,7 +89,7 @@ For C = 1 To sh
                     
                     If SLD = "" Then Exit For
                     
-                    Sheets("Slide").Activate
+                    Sheets("Table").Activate
                     Range([SLD]).Select
                     Set temp = Selection
                     temp.Copy
@@ -102,24 +119,21 @@ For C = 1 To sh
             For S = 2 To PPTslide.Shapes(lastshape).Table.Columns.Count
                 For R = 2 To PPTslide.Shapes(lastshape).Table.Rows.Count
                     With PPTslide.Shapes(lastshape).Table.Cell(R, S)
-                        '.Select
-                        If Left(.shape.TextFrame.TextRange.Text, 1) = "(" Or Left(.shape.TextFrame.TextRange.Text, 1) = "-" Then
-                            .shape.TextFrame.TextRange.Font.Color.RGB = vbRed
+                         '.Select
+                        If Left(.Shape.TextFrame.TextRange.Text, 1) = "(" Or Left(.Shape.TextFrame.TextRange.Text, 1) = "-" Then
+                            .Shape.TextFrame.TextRange.Font.Color.RGB = vbRed
                         End If
                     End With
                 Next
             Next
-                   'Exit For
+                  
                 End If
  
              Application.CutCopyMode = False
- '           Next '1st for loop
             Else: Exit For
         End If 'SLD blank
-    'Next
- 
 Next
-'Next
+
  sh = 0
 Sheets("Buttons").Select
 leave: i = i + 1
@@ -127,23 +141,32 @@ Application.CutCopyMode = False
              
 Wend
 leavetable:
+ R = Empty
+ S = Empty
+ lastshape = Empty
+ rangecount = Empty
+ C = Empty
+ SLD = vbNullString
+ Set temp = Nothing
+ LR = Empty
+ CNT = 0
 
     'Working on charts
-    i = 4
-LR = Sheets("buttons").Range("AA3").End(xlDown).Row
+i = 14
+LR = Sheets("buttons").Range("W13").End(xlDown).Row
 
-If LR > 200 Then GoTo leavecharts
+If LR > 100 Or IsEmpty(Sheets("Buttons").Range("V14").Value) Then GoTo leavecharts
 
 While i <= LR
 SLD = ""
     wb.Activate
         
-        Set PPTslide = PPTPrez.Slides(Sheets("buttons").Range("AA" & i).Value)
+        Set PPTslide = PPTPrez.Slides(Sheets("buttons").Range("W" & i).Value)
         
         PPTslide.Select
     For rangecount = 1 To 2 ' range count
-                    If rangecount = 1 Then Cname = Sheets("buttons").Range("AB" & i).Value
-                    If rangecount = 2 Then Cname = Sheets("buttons").Range("AC" & i).Value
+                    If rangecount = 1 Then Cname = Sheets("buttons").Range("X" & i).Value
+                    If rangecount = 2 Then Cname = Sheets("buttons").Range("Y" & i).Value
     If Cname = "" Then GoTo leavecharts
 trap = False
 If rangecount = 2 Then GoTo secondchart
@@ -154,16 +177,15 @@ trap = True
         If PPTslide.Shapes(C).HasChart Then
               PPTslide.Shapes(C).Select
      
-     Sheets("Slide").Activate
+     Sheets("chart").Activate
      Range([Cname]).Select
 If SLD <> PPTslide.Shapes(C).Name Or SLD = "" Then
     SLD = PPTslide.Shapes(C).Name
-     With PPTslide.Shapes(C).chart.ChartData.Workbook
+     With PPTslide.Shapes(C).Chart.ChartData.Workbook
         With .Sheets(1)
             x = Selection.Rows(1).Row
             y = Selection.Rows.Count + x - 1
             XY = y - x
-             R = 1
             While x < y
                 .Range("A" & XY + 1).Value = Range([Cname]).Cells(XY + 1, 1).Value
                 .Range("B" & XY + 1).Value = Range([Cname]).Cells(XY + 1, 2).Value
@@ -172,8 +194,8 @@ If SLD <> PPTslide.Shapes(C).Name Or SLD = "" Then
                 x = x + 1
                 XY = XY - 1
             Wend
+            PPTslide.Shapes(C).Chart.Refresh
             GoTo exittextboxchanger
-
         End With
      End With
 End If
@@ -183,23 +205,23 @@ End If
 leav:
 
 CNT = 1
-textboxchanger:
+textboxchanger: CNT = 0
 For S = 1 To PPTslide.Shapes.Count
 secondchart:
-Sheets("Slide").Activate
+Sheets("Chart").Activate
 Range([Cname]).Select
         If trap Then GoTo exittextboxchanger
         If PPTslide.Shapes(S).Type = msoTextBox And PPTslide.Shapes(S).Name Like "TextBox*" Then
-        PPTslide.Shapes(S).Select
+        'PPTslide.Shapes(S).Select
         If Not trap Then
-            If (Abs(PPTslide.Shapes(S).Left) <= 120 And Abs(PPTslide.Shapes(S).Left) >= 70) Or _
-            (Abs(PPTslide.Shapes(S).Left) <= 750 And Abs(PPTslide.Shapes(S).Left) >= 670) Then PPTslide.Shapes(S).TextFrame.TextRange.Text = Range([Cname]).Cells(2, 5).Value
-            If Abs(PPTslide.Shapes(S).Left) <= 250 And Abs(PPTslide.Shapes(S).Left >= 170) Or _
-            (Abs(PPTslide.Shapes(S).Left) <= 880 And Abs(PPTslide.Shapes(S).Left) >= 800) Then PPTslide.Shapes(S).TextFrame.TextRange.Text = Range([Cname]).Cells(2 + 1, 5).Value
-            If Abs(PPTslide.Shapes(S).Left) <= 350 And Abs(PPTslide.Shapes(S).Left) >= 270 Or _
-            (Abs(PPTslide.Shapes(S).Left) <= 1000 And Abs(PPTslide.Shapes(S).Left) >= 900) Then PPTslide.Shapes(S).TextFrame.TextRange.Text = Range([Cname]).Cells(3 + 1, 5).Value
-            If Abs(PPTslide.Shapes(S).Left) <= 500 And Abs(PPTslide.Shapes(S).Left) >= 380 Or _
-            (Abs(PPTslide.Shapes(S).Left) <= 1100 And Abs(PPTslide.Shapes(S).Left) >= 1000) Then PPTslide.Shapes(S).TextFrame.TextRange.Text = Range([Cname]).Cells(4 + 1, 5).Value
+            If (Abs(PPTslide.Shapes(S).Left) <= 120 And Abs(PPTslide.Shapes(S).Left) >= 70 And Abs(PPTslide.Shapes(S).Top) < 570) Or _
+            (Abs(PPTslide.Shapes(S).Left) <= 750 And Abs(PPTslide.Shapes(S).Left) >= 670 And Abs(PPTslide.Shapes(S).Top) < 570) Then PPTslide.Shapes(S).TextFrame.TextRange.Text = Range([Cname]).Cells(2, 5).Value
+            If Abs(PPTslide.Shapes(S).Left) <= 250 And Abs(PPTslide.Shapes(S).Left >= 170 And Abs(PPTslide.Shapes(S).Top) < 570) Or _
+            (Abs(PPTslide.Shapes(S).Left) <= 880 And Abs(PPTslide.Shapes(S).Left) >= 800 And Abs(PPTslide.Shapes(S).Top) < 570) Then PPTslide.Shapes(S).TextFrame.TextRange.Text = Range([Cname]).Cells(2 + 1, 5).Value
+            If Abs(PPTslide.Shapes(S).Left) <= 350 And Abs(PPTslide.Shapes(S).Left) >= 270 And Abs(PPTslide.Shapes(S).Top) < 570 Or _
+            (Abs(PPTslide.Shapes(S).Left) <= 1000 And Abs(PPTslide.Shapes(S).Left) >= 900 And Abs(PPTslide.Shapes(S).Top) < 570) Then PPTslide.Shapes(S).TextFrame.TextRange.Text = Range([Cname]).Cells(3 + 1, 5).Value
+            If Abs(PPTslide.Shapes(S).Left) <= 500 And Abs(PPTslide.Shapes(S).Left) >= 380 And Abs(PPTslide.Shapes(S).Top) < 570 Or _
+            (Abs(PPTslide.Shapes(S).Left) <= 1100 And Abs(PPTslide.Shapes(S).Left) >= 1000 And Abs(PPTslide.Shapes(S).Top) < 570) Then PPTslide.Shapes(S).TextFrame.TextRange.Text = Range([Cname]).Cells(4 + 1, 5).Value
             CNT = CNT + 1
             If CNT = 4 Or CNT = 8 Then Exit For
         End If
@@ -217,109 +239,171 @@ i = i + 1
 Application.CutCopyMode = False
 
 Wend
+'Clearing Memory
+S = Empty
+i = Empty
+x = Empty
+y = Empty
+XY = Empty
+SLD = vbNullString
+Cname = vbNullString
+rangecount = Empty
 
    'Waterfall chart
 leavecharts:
 wb.Activate
-i = 4
-LR = Sheets("Buttons").Range("AF3").End(xlDown).Row
-If LR > 200 Then GoTo leavewaterfall
+i = 14
+LR = Sheets("Buttons").Range("AB13").End(xlDown).Row
+If LR > 100 Or IsEmpty(Sheets("buttons").Range("AA14").Value) Then GoTo leavewaterfall
 
 While i <= LR
 
 CHRT1 = False
-tbl = ""
+y = 0
 Cname = ""
+trap = False
 
-        Set PPTslide = PPTPrez.Slides(Sheets("buttons").Range("AF" & i).Value)
+        Set PPTslide = PPTPrez.Slides(Sheets("buttons").Range("AB" & i).Value)
            
            PPTslide.Select
            
+    If Sheets("buttons").Range("AC" & i).Value <> "" Then CW = 1
+    If Sheets("buttons").Range("AD" & i).Value <> "" Then CW = 2
+
     '1st Waterfall chart
-For C = 1 To PPTslide.Shapes.Count
-    If PPTslide.Shapes(C).HasChart And tbl = "" Then
-    Sheets("Slide").ChartObjects(Sheets("Buttons").Range("AG" & i).Value).Copy
-        tbl = PPTslide.Shapes(C).Name
+    
+lastshape = PPTslide.Shapes.Count
+
+For C = 1 To lastshape
+    If PPTslide.Shapes(C).HasChart And PPTslide.Shapes(C).Name <> tbl Then
+    
+    y = y + 1
+    If y = 1 Then SLD = Sheets("Buttons").Range("AC" & i).Value
+    If y = 2 Then SLD = Sheets("Buttons").Range("AD" & i).Value
+        
+        If SLD = "" Then GoTo TextBoxchange
+        Range([SLD]).Copy
+
+        PPTslide.Shapes(C).Select
             L = PPTslide.Shapes(C).Left
             T = PPTslide.Shapes(C).Top
             W = PPTslide.Shapes(C).Width
             H = PPTslide.Shapes(C).Height
+            XY = PPTslide.Shapes(C).Chart.ChartGroups(1).GapWidth
             PPTslide.Shapes(C).Delete
-            PPTslide.Shapes.PasteSpecial ppPasteDefault
-            Exit For
-    End If
-Next
-    '2nd waterfall chart
-For C = 1 To PPTslide.Shapes.Count
-    If PPTslide.Shapes(C).HasChart And Cname = "" Then
-        Sheets("Slide").ChartObjects(Sheets("Buttons").Range("AH" & i).Value).Copy
-        Cname = PPTslide.Shapes(C).Name
-            L1 = PPTslide.Shapes(C).Left
-            T1 = PPTslide.Shapes(C).Top
-            W1 = PPTslide.Shapes(C).Width
-            H1 = PPTslide.Shapes(C).Height
-            PPTslide.Shapes(C).Delete
-            PPTslide.Shapes.PasteSpecial ppPasteDefault
-            Exit For
-    End If
-Next
 
-For CW = 1 To PPTslide.Shapes.Count
-    If PPTslide.Shapes(CW).HasChart Then
-        If Not CHRT1 Then
-            PPTslide.Shapes(CW).ZOrder msoSendToBack
-            With PPTslide.Shapes(1)
-                .LockAspectRatio = msoFalse
-                .Left = L
-                .Top = T
-                .Width = W
-                .Height = H
+            PPTslide.Shapes.AddChart2(395, xlWaterfall, L, T, W, H, True).Select
+            Application.Wait (Now + TimeValue("0:00:05"))
+
+            With PPTslide.Shapes(lastshape).Chart.ChartData.Workbook
+            .Worksheets(1).Cells.ClearContents
+            .Sheets(1).Range("A1").PasteSpecial xlPasteValues
+            Application.CutCopyMode = False
+            tbl = PPTslide.Shapes(lastshape).Name
+            PPTslide.Shapes(lastshape).Chart.SeriesCollection(1).HasDataLabels = True
+            rangeaddress = PPTslide.Shapes(lastshape).Chart.ChartData.Workbook.Worksheets(1).UsedRange.Address(external:=True)
+            x = .Sheets(1).Range("A2").End(xlDown).Row - 1
+            PPTslide.Shapes(lastshape).Chart.SetSourceData rangeaddress
+            
+            .Close
             End With
-            CHRT1 = True
-            GoTo nextcw
-        End If
-        If CHRT1 = True Then
-            PPTslide.Shapes(CW).ZOrder msoSendToBack
-            With PPTslide.Shapes(1)
-                .LockAspectRatio = msoFalse
-                .Left = L1
-                .Top = T1
-                .Width = W1
-                .Height = H1
-                PPTslide.Shapes(1).chart.SeriesCollection (1)
+            PPTslide.Shapes(lastshape).ZOrder msoSendToBack 'changes to shapes(1)
+            
+                        'Alignment
+            With PPTslide.Shapes(1).Chart
+            'Legend Colors
+            .Legend.LegendEntries(1).Format.Fill.ForeColor.RGB = RGB(146, 208, 80)
+            .Legend.LegendEntries(2).Format.Fill.ForeColor.RGB = vbRed
+            .Legend.LegendEntries(3).Format.Fill.ForeColor.RGB = RGB(0, 154, 221)
+            
+            'gridlines
+            .Axes(xlValue).Delete
+            .Axes(xlValue).MajorGridlines.Delete
+            
+            'Sets total
+            .FullSeriesCollection(1).Points(1).IsTotal = True
+            .FullSeriesCollection(1).Points(x).IsTotal = True
+    
+            'delete chartdata and legend
+            .Legend.Delete
+            .HasTitle = False
+            
+            'data Labels
+            .ApplyDataLabels (xlDataLabelsShowValue)
+            .PlotArea.Format.Line.Visible = msoFalse
+            
+            'width
+            .ChartGroups(1).GapWidth = XY
+            
             End With
-            Exit For
-        End If
+    
+    If y = CW Then GoTo TextBoxchange
+    C = C - 1
     End If
-nextcw:
+    
 Next
+tbl = ""
+
+TextBoxchange:
     'Textboxes
 CNT = 0
 For S = 1 To PPTslide.Shapes.Count
     If PPTslide.Shapes(S).Type = msoTextBox And PPTslide.Shapes(S).Name Like "TextBox*" Then
-        
-        If (Abs(PPTslide.Shapes(S).Left) <= 120 And Abs(PPTslide.Shapes(S).Left) >= 0) Or (Abs(PPTslide.Shapes(S).Left)) >= 120 Then
+        'PPTslide.Shapes(S).Select
+        If (Abs(PPTslide.Shapes(S).Left) <= 120 And Abs(PPTslide.Shapes(S).Left) >= 0 And Abs(PPTslide.Shapes(S).Top) < 570) Or _
+        (Abs(PPTslide.Shapes(S).Left)) >= 120 And Abs(PPTslide.Shapes(S).Top) < 570 Then
 
-       lastshape = Application.Match(Sheets("buttons").Range("AE" & i).Value, Sheets("slide").Rows(43), 0)
+       lastshape = Application.Match(Sheets("buttons").Range("AA" & i).Value, Sheets("Chart").Rows(2), 0)
             If CNT = 0 Then lastshape = lastshape + 3
                 If CNT = 1 Then lastshape = lastshape + 4
             
-            PPTslide.Shapes(S).TextFrame.TextRange.Text = Sheets("slide").Cells(54, lastshape).Value
+            PPTslide.Shapes(S).TextFrame.TextRange.Text = Sheets("Chart").Cells(4, lastshape).Value
             CNT = CNT + 1
             If CNT = 2 Then Exit For
         End If
-        
-
     End If
 Next S
-'nextcw:
-'Next
+
 
 i = i + 1
 
 Wend
    
 leavewaterfall:
+S = Empty
+CNT = Empty
+lastshape = Empty
+CW = Empty
+Cname = vbNullString
+tbl = vbNullString
+L1 = Empty
+T1 = Empty
+H1 = Empty
+W1 = Empty
+L = Empty
+T = Empty
+H = Empty
+W = Empty
+i = Empty
+XY = Empty
+y = Empty
+x = Empty
+
+Worksheets("Table").Visible = False
+Worksheets("chart").Visible = False
+
+Sheets("Buttons").Select
+    If Sheets("Buttons").Range("T8").Value = "" Then
+    
+    Cname = InputBox("Please enter the preferred name for your PPT", "Information")
+    Sheets("buttons").Range("t8").Value = Cname
+        Else: Cname = Sheets("Buttons").Range("T8").Value
+    End If
+    
+    PPTPrez.SaveAs Filename:=PPTPrez.Path & "\" & Cname & ".pptx"
+    
+
+    'End time
     elapse = Format((Timer - starttime) / 86400, "hh:mm:ss")
     MsgBox "It took " & elapse & " minutes to prepare this template", vbInformation
 
