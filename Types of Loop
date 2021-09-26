@@ -23,7 +23,7 @@ End Sub
 Sub doloop_V1()
     Dim startcell As Byte 'Here the work file is less than 255 so we have used byte type
     startcell = 8
-        Do Until Range("A" & startcell).Value = "" 'For dowhile loop just change the = "" tp <> ""
+        Do Until Range("A" & startcell).Value = "" 'For dowhile loop just change the = "" to <> ""
             Range("B" & startcell).Value = Range("A" & startcell).Value + 10
             startcell = startcell + 1
         Loop
