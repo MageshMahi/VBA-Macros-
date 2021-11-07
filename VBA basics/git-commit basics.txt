@@ -1,0 +1,17 @@
+open git bash
+
+run
+-git init
+
+get the remote link and paste on gitbash cmd
+-git remote add origin https://github.com/Sundarreva/repository-cog.git
+
+-git status
+
+- git add .
+
+- git status
+
+- git commit -m "msg"
+
+- git push origin master
