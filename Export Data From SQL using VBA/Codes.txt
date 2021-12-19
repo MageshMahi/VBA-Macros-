@@ -1,0 +1,53 @@
+Sub Pop_cntry()
+
+Dim Conn As ADODB.Connection
+Dim RecSet As ADODB.Recordset
+Dim SQLcde As String
+Dim sign As Integer
+
+Set Conn = New ADODB.Connection
+
+Conn.Open "DRIVER={MySQL ODBC 8.0 Unicode Driver};SERVER=localhost;DATABASE=world;USER=root;PASSWORD=root"
+
+Set RecSet = New ADODB.Recordset
+RecSet.ActiveConnection = Conn
+
+sign = Sgn(Range("I3").Value)
+
+ If Range("I3").Value <> "" And Range("i7").Value <> "" Then
+
+        If sign = "1" Then
+          
+          SQLcde = "Select * from city where population > " & Range("I3").Value & " and countrycode = '" & Range("i7").Value & "';"
+    
+    Else: SQLcde = "Select * from city where population < " & Abs(Range("I3").Value) & " and countrycode = '" & Range("i7").Value & "';"
+        
+        End If
+    
+    ElseIf IsEmpty(Range("i3").Value) And Range("i7").Value <> "" Then SQLcde = "Select * from city where countrycode ='" & Range("i7").Value & "';"
+    
+    ElseIf Range("i3").Value <> "" And IsEmpty(Range("i7").Value) And sign = "-1" Then SQLcde = "Select * from city where population < '" & Abs(Range("i3").Value) & "';"
+    
+    ElseIf Range("i3").Value <> "" And IsEmpty(Range("i7").Value) And sign = "1" Then SQLcde = "Select * from city where population > '" & Range("i3").Value & "';"
+    
+    Else: SQLcde = "Select * from city"
+
+ End If
+
+RecSet.Open SQLcde
+
+Cleardata
+
+Range("A2").CopyFromRecordset RecSet
+
+Conn.Close
+
+End Sub
+
+
+
+Sub Cleardata()
+
+Range("A2:E200000").ClearContents
+
+End Sub
